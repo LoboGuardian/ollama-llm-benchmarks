@@ -1,0 +1,21 @@
+[project]
+name = "ollama-llm-benchmarks"
+version = "0.1.0"
+description = "A performance and resource utilization benchmarking tool for local LLMs served via Ollama."
+authors = [
+    {name = "LoboGuardian 🐺",email = "loboguardian.dev@gmail.com"}
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.13"
+packages = [{include = "ollama_llm_benchmarks"}]
+dependencies = [
+    "ollama (>=0.6.0,<0.7.0)",
+    "psutil (>=7.1.2,<8.0.0)",
+    "pyyaml (>=6.0.3,<7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
