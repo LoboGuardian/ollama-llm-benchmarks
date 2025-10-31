@@ -1,6 +1,7 @@
 # resource_monitor.py
 import psutil
 import subprocess
+import re
 import os
 import time
 
@@ -32,19 +33,46 @@ class ResourceMonitor:
         """
         Retrieves CPU temperature (Linux-specific using `sensors`).
         Requires `lm-sensors` to be installed on the host.
+        Prioritizes common CPU/Package/Core temperatures.
         """
         try:
-            # Use `subprocess.run` instead of `os.popen` for better control/error handling (Clean Code)
+            # Use subprocess.run for robust command execution
             result = subprocess.run(['sensors'], capture_output=True, text=True, check=True, timeout=5)
             output = result.stdout
             
-            # Simple parsing: search for 'Package id' temperature or similar core temp
+            # Keywords to prioritize for system/CPU temperature extraction
+            # Based on common output (Package, Core) and your specific output (cpu_thermal, temp1 under an ADC)
+            keywords = ['Package id 0', 'Core 0', 'cpu_thermal', 'temp1']
+            
+            # Use a pattern to find any temperature line and extract the first float value
+            # Pattern: matches a '+' followed by digits, a dot, and digits, then '°C'
+            temp_pattern = re.compile(r'\+(\d+\.\d+)°C')
+            
+            # Simple, direct parsing for a temperature value
             for line in output.split('\n'):
-                if 'Package id 0' in line or 'Core 0' in line:
-                    temp_str = line.split('+')[1].split('°C')[0].strip()
-                    return float(temp_str)
-            return None
-        except (FileNotFoundError, subprocess.CalledProcessError, IndexError, ValueError):
+                line_lower = line.strip().lower()
+
+                # Check for the specific CPU-related identifiers first
+                if any(k.lower() in line_lower for k in keywords):
+                    match = temp_pattern.search(line)
+                    if match:
+                        return float(match.group(1))
+
+            # Fallback: If no specific keyword is found, search for the highest temperature
+            # This is more robust for unusual sensor names (like 'rp1_adc-isa-c8000')
+            highest_temp = None
+            for line in output.split('\n'):
+                match = temp_pattern.search(line)
+                if match:
+                    temp = float(match.group(1))
+                    if highest_temp is None or temp > highest_temp:
+                        highest_temp = temp
+
+            return highest_temp
+
+        except (FileNotFoundError, subprocess.CalledProcessError, IndexError, ValueError) as e:
+            # Log or handle the error appropriately
+            print(f"Error during temperature retrieval: {e}")
             return None
 
     def get_resource_snapshot(self) -> dict:
@@ -58,7 +86,7 @@ class ResourceMonitor:
         data = {
             "timestamp": time.time(),
             "system_cpu_percent": system_cpu,
-            "system_ram_used_gb": round(system_memory.used / (1024**3), 2),
+            "system_ram_used_gb": round(system_memory.used / (1024*2), 2),
             "system_temp_celsius": self._get_system_temperature()
         }
 

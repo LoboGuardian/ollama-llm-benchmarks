@@ -1,0 +1,23 @@
+# config.yaml
+# ---
+# Global Configuration for LLM Benchmarks
+# ---
+
+# List of models available via `ollama list` that you want to test.
+models_to_test:
+  - tinyllama:latest
+  - gemma3:1b
+  - qwen3:1.7b
+
+# The specific prompt that will be sent to each model.
+# A complex prompt is better for stressing the model.
+test_prompt: "How is 2 * 2"
+
+# Number of times to run the prompt for each model to get reliable averages.
+iterations: 3
+
+# Output file path for the final JSON report.
+output_file: "benchmark_results.json"
+
+# Ollama server details (usually default)
+ollama_host: "http://localhost:11434"

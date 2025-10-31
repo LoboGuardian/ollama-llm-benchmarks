@@ -66,5 +66,5 @@ class OllamaClient:
             "total_latency_s": round(total_latency, 4),
             "tokens_generated": tokens_generated,
             "tokens_per_second": round(tokens_per_second, 2),
-            "ollama_metadata": final_chunk
+            "ollama_metadata": dict(final_chunk)
         }
